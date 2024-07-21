@@ -11,6 +11,7 @@ import {
   YieldTableData,
   InterpolatedRow,
   DefaultTableProperties,
+  YieldClass,
 } from "./interfaces";
 
 const Home: React.FC = () => {
@@ -42,44 +43,54 @@ const Home: React.FC = () => {
 
     if (!lowerClassData || !upperClassData) return;
 
-    const interpolateRow = (
-      lowerRow: InterpolatedRow,
-      upperRow: InterpolatedRow,
-      index: number,
-    ): InterpolatedRow => {
-      const interpolatedRow: Partial<InterpolatedRow> = {
-        age: lowerRow.age,
-        yield_class: parsedYieldClass,
-      };
-
-      DefaultTableProperties.forEach((property) => {
-        const upperValue = upperRow?.[property] ?? lowerRow[property];
-        const lowerValue = lowerRow[property];
-
-        interpolatedRow[property] =
-          lowerClassData === upperClassData
-            ? lowerValue
-            : interpolateValue(
-                parsedYieldClass,
-                upperClassData.yield_class,
-                upperValue,
-                lowerClassData.yield_class,
-                lowerValue,
-              );
-      });
-
-      return interpolatedRow as InterpolatedRow;
-    };
-
     try {
       const interpolatedRows = lowerClassData.rows.map((row, index) =>
-        interpolateRow(row, upperClassData.rows[index] ?? row, index),
+        interpolateRow(
+          parsedYieldClass,
+          upperClassData,
+          lowerClassData,
+          row,
+          upperClassData.rows[index] ?? row,
+          index,
+        ),
       );
 
       setInterpolatedData(interpolatedRows);
     } catch (error) {
       console.error("Failed to fetch data:", error);
     }
+  };
+
+  const interpolateRow = (
+    parsedYieldClass: number,
+    upperClassData: YieldClass,
+    lowerClassData: YieldClass,
+    lowerRow: InterpolatedRow,
+    upperRow: InterpolatedRow,
+    index: number,
+  ): InterpolatedRow => {
+    const interpolatedRow: Partial<InterpolatedRow> = {
+      age: lowerRow.age,
+      yield_class: parsedYieldClass,
+    };
+
+    DefaultTableProperties.forEach((property) => {
+      const upperValue = upperRow?.[property] ?? lowerRow[property];
+      const lowerValue = lowerRow[property];
+
+      interpolatedRow[property] =
+        lowerClassData === upperClassData
+          ? lowerValue
+          : interpolateValue(
+              parsedYieldClass,
+              upperClassData.yield_class,
+              upperValue,
+              lowerClassData.yield_class,
+              lowerValue,
+            );
+    });
+
+    return interpolatedRow as InterpolatedRow;
   };
 
   const loadData = async () => {
